@@ -6,58 +6,102 @@
         <title>@yield('title', config('app.name', 'TaskFlow'))</title>
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=fraunces:500,600,700|instrument-sans:400,500,600,700" rel="stylesheet" />
-        @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
-            @vite(['resources/css/app.css', 'resources/js/app.js'])
-        @endif
+        @include('layouts.partials.vite-assets')
     </head>
-    <body class="min-h-screen bg-[radial-gradient(circle_at_top,_#f7f1e8,_#f2e6d7_42%,_#e7ddd2_100%)] text-stone-900 antialiased">
+    <body class="min-h-screen bg-stone-950 text-stone-100 antialiased">
         <div class="relative min-h-screen overflow-hidden">
-            <div class="pointer-events-none absolute inset-x-0 top-0 h-80 bg-[radial-gradient(circle_at_top,_rgba(164,92,56,0.2),_transparent_55%)]"></div>
-            <div class="pointer-events-none absolute inset-y-0 right-0 hidden w-80 bg-[radial-gradient(circle_at_center,_rgba(10,102,94,0.12),_transparent_68%)] lg:block"></div>
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(240,122,74,0.24),_transparent_33%),radial-gradient(circle_at_bottom_right,_rgba(15,156,132,0.22),_transparent_36%),linear-gradient(160deg,_#11100e,_#1d1714_45%,_#0f2220)]"></div>
 
-            <header class="border-b border-stone-900/10 bg-white/75 backdrop-blur">
-                <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
-                    <div>
-                        <a href="{{ route('dashboard') }}" class="inline-flex items-center gap-3">
-                            <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-stone-900 text-sm font-semibold tracking-[0.3em] text-stone-50">TF</span>
-                            <div>
-                                <p class="font-serif text-xl tracking-tight text-stone-950">TaskFlow Studio</p>
-                                <p class="text-xs uppercase tracking-[0.24em] text-stone-500">Focused team delivery</p>
+            <div class="relative mx-auto flex min-h-screen max-w-[1600px]">
+                <aside class="hidden w-80 shrink-0 border-r border-white/10 bg-black/10 p-6 backdrop-blur-xl lg:flex lg:flex-col">
+                    <a href="{{ route('dashboard') }}" class="inline-flex items-center gap-3">
+                        <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-sm font-semibold tracking-[0.3em] text-stone-950">TF</span>
+                        <div>
+                            <p class="font-serif text-xl tracking-tight text-white">TaskFlow Studio</p>
+                            <p class="text-xs uppercase tracking-[0.24em] text-stone-400">Focused team delivery</p>
+                        </div>
+                    </a>
+
+                    <div class="mt-10 rounded-[2rem] border border-white/10 bg-white/6 p-5">
+                        <p class="workspace-kicker">Workspace</p>
+                        <nav class="mt-5 space-y-2">
+                            <a href="{{ route('dashboard') }}" class="flex items-center justify-between rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-stone-950">
+                                Dashboard
+                                <span class="rounded-full bg-stone-950/10 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-stone-700">Live</span>
+                            </a>
+                            <div class="rounded-2xl border border-white/10 px-4 py-3 text-sm text-stone-300">
+                                Team workspace
                             </div>
-                        </a>
+                            <div class="rounded-2xl border border-white/10 px-4 py-3 text-sm text-stone-300">
+                                Delivery analytics
+                            </div>
+                        </nav>
                     </div>
 
-                    <div class="flex items-center gap-4">
-                        <div class="hidden text-right sm:block">
-                            <p class="text-sm font-semibold text-stone-900">{{ auth()->user()->name }}</p>
-                            <p class="text-xs uppercase tracking-[0.22em] text-stone-500">{{ auth()->user()->email }}</p>
-                        </div>
+                    <div class="mt-6 rounded-[2rem] border border-white/10 bg-white/7 p-5 text-stone-50">
+                        <p class="workspace-kicker">Quick action</p>
+                        <p class="mt-3 font-serif text-2xl">Create and assign the next task.</p>
+                        <button type="button" data-modal-trigger="create-task-modal" class="primary-pill mt-5">
+                            New task
+                        </button>
+                    </div>
 
-                        <form method="POST" action="{{ route('logout') }}">
+                    <div class="mt-auto rounded-[2rem] border border-white/10 bg-white/6 p-5">
+                        <p class="text-sm font-semibold text-white">{{ auth()->user()->name }}</p>
+                        <p class="mt-1 text-xs uppercase tracking-[0.22em] text-stone-400">{{ auth()->user()->email }}</p>
+                        <form method="POST" action="{{ route('logout') }}" class="mt-5">
                             @csrf
-                            <button type="submit" class="inline-flex items-center rounded-full border border-stone-900/10 bg-stone-900 px-4 py-2 text-sm font-medium text-stone-50 transition hover:bg-stone-800">
+                            <button type="submit" class="secondary-pill w-full justify-center">
                                 Sign out
                             </button>
                         </form>
                     </div>
-                </div>
-            </header>
+                </aside>
 
-            <main class="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+                <div class="min-w-0 flex-1">
+                    <header class="border-b border-white/10 bg-black/10 backdrop-blur-xl">
+                        <div class="flex items-center justify-between px-6 py-4 lg:px-8">
+                            <div class="flex items-center gap-3 lg:hidden">
+                                <a href="{{ route('dashboard') }}" class="inline-flex items-center gap-3">
+                                    <span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-xs font-semibold tracking-[0.3em] text-stone-950">TF</span>
+                                    <div>
+                                        <p class="font-serif text-lg tracking-tight text-white">TaskFlow Studio</p>
+                                        <p class="text-[11px] uppercase tracking-[0.24em] text-stone-400">Workspace</p>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <div class="ml-auto flex items-center gap-3">
+                                <button type="button" data-modal-trigger="create-task-modal" class="primary-pill">
+                                    Create task
+                                </button>
+                                <form method="POST" action="{{ route('logout') }}" class="lg:hidden">
+                                    @csrf
+                                    <button type="submit" class="secondary-pill">
+                                        Sign out
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main class="px-6 py-8 lg:px-8">
                 @if (session('status'))
-                    <div class="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-900">
+                    <div class="mb-6 rounded-2xl border border-emerald-400/25 bg-emerald-400/10 px-5 py-4 text-sm text-emerald-100">
                         {{ session('status') }}
                     </div>
                 @endif
 
                 @if ($errors->any())
-                    <div class="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-900">
+                    <div class="mb-6 rounded-2xl border border-rose-400/25 bg-rose-400/10 px-5 py-4 text-sm text-rose-100">
                         <p class="font-semibold">Please review the highlighted fields and try again.</p>
                     </div>
                 @endif
 
-                @yield('content')
-            </main>
+                        @yield('content')
+                    </main>
+                </div>
+            </div>
         </div>
     </body>
 </html>

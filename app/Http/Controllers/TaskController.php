@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateTaskRequest;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -25,7 +26,7 @@ class TaskController extends Controller
             'overdue' => request()->boolean('overdue'),
         ];
 
-        $tasks = Task::query()
+        $filteredTasks = Task::query()
             ->with(['creator', 'assignee'])
             ->search($filters['search'])
             ->forStatus($filters['status'])
@@ -35,27 +36,48 @@ class TaskController extends Controller
             ->latest()
             ->get();
 
-        $myTasks = $tasks->filter(
-            fn (Task $task): bool => $task->created_by === $user->id || $task->assigned_to === $user->id,
-        )->values();
-
-        $teamTasks = $tasks->reject(
-            fn (Task $task): bool => $task->created_by === $user->id || $task->assigned_to === $user->id,
-        )->values();
-
         $allTasks = Task::query()
             ->with(['creator', 'assignee'])
             ->latest()
             ->get();
 
+        $myTasksCount = $allTasks->filter(
+            fn (Task $task): bool => $task->created_by === $user->id || $task->assigned_to === $user->id,
+        )->count();
+
+        $monthlyCompletionChart = collect(range(5, 0))->map(function (int $monthsAgo) use ($allTasks): array {
+            $month = Carbon::now()->subMonths($monthsAgo)->startOfMonth();
+            $created = $allTasks->filter(
+                fn (Task $task): bool => $task->created_at instanceof Carbon && $task->created_at->isSameMonth($month),
+            )->count();
+            $completed = $allTasks->filter(
+                fn (Task $task): bool => $task->completed_at instanceof Carbon && $task->completed_at->isSameMonth($month),
+            )->count();
+
+            return [
+                'label' => $month->format('M'),
+                'created' => $created,
+                'completed' => $completed,
+                'ratio' => $created > 0 ? (int) round(($completed / $created) * 100) : 0,
+            ];
+        })->values();
+
+        $distributionChart = [
+            ['label' => 'Completed', 'value' => $allTasks->where('status', TaskStatus::Completed)->count(), 'color' => '#15803d'],
+            ['label' => 'Overdue', 'value' => $allTasks->filter(fn (Task $task): bool => $task->isOverdue())->count(), 'color' => '#be123c'],
+            ['label' => 'Active now', 'value' => $allTasks->where('status', TaskStatus::InProgress)->count(), 'color' => '#b45309'],
+        ];
+
         return view('tasks.index', [
-            'myTasks' => $myTasks,
-            'teamTasks' => $teamTasks,
+            'filteredTasks' => $filteredTasks,
             'allTasks' => $allTasks,
+            'myTasksCount' => $myTasksCount,
             'users' => User::query()->orderBy('name')->get(),
             'priorities' => TaskPriority::cases(),
             'statuses' => TaskStatus::cases(),
             'filters' => $filters,
+            'monthlyCompletionChart' => $monthlyCompletionChart,
+            'distributionChart' => $distributionChart,
         ]);
     }
 

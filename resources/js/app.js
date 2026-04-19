@@ -36,3 +36,55 @@ countdownElements.forEach((element) => {
         }
     }, 1000);
 });
+
+const openModal = (modal) => {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.classList.add('overflow-hidden');
+};
+
+const closeModal = (modal) => {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.classList.remove('overflow-hidden');
+};
+
+document.querySelectorAll('[data-modal-trigger]').forEach((button) => {
+    button.addEventListener('click', () => {
+        const target = button.getAttribute('data-modal-trigger');
+        const modal = document.querySelector(`[data-modal="${target}"]`);
+
+        if (modal) {
+            openModal(modal);
+        }
+    });
+});
+
+document.querySelectorAll('[data-modal-close]').forEach((button) => {
+    button.addEventListener('click', () => {
+        const target = button.getAttribute('data-modal-close');
+        const modal = document.querySelector(`[data-modal="${target}"]`);
+
+        if (modal) {
+            closeModal(modal);
+        }
+    });
+});
+
+document.querySelectorAll('[data-modal]').forEach((modal) => {
+    if (modal.getAttribute('data-open-on-load') === 'true') {
+        openModal(modal);
+    }
+});
+
+window.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') {
+        return;
+    }
+
+    document.querySelectorAll('[data-modal]').forEach((modal) => {
+        if (! modal.classList.contains('hidden')) {
+            closeModal(modal);
+        }
+    });
+});

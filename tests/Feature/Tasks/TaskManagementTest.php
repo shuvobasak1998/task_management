@@ -35,8 +35,9 @@ class TaskManagementTest extends TestCase
         $response->assertOk()
             ->assertSee('My planning task')
             ->assertSee('Shared backlog grooming')
-            ->assertSee('Tasks connected to you')
-            ->assertSee('Shared workspace activity');
+            ->assertSee('Search and filter the workspace')
+            ->assertSee('Monthly completed ratio')
+            ->assertSee('Status distribution');
     }
 
     public function test_dashboard_surfaces_overdue_and_completed_timer_states(): void
@@ -60,8 +61,8 @@ class TaskManagementTest extends TestCase
         $response = $this->actingAs($user)->get('/dashboard');
 
         $response->assertOk()
-            ->assertSee('Some tasks have run out of time.')
-            ->assertSee('Time expired')
+            ->assertSee('A smarter view of team execution.')
+            ->assertSee('Expired')
             ->assertSee('Timer stopped');
     }
 
@@ -186,5 +187,17 @@ class TaskManagementTest extends TestCase
         $response->assertOk()
             ->assertSee('Expired support handoff')
             ->assertDontSee('Healthy design review');
+    }
+
+    public function test_dashboard_renders_create_task_modal_and_metrics(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get('/dashboard');
+
+        $response->assertOk()
+            ->assertSee('Create a task without leaving the workspace')
+            ->assertSee('Total tasks')
+            ->assertSee('Due soon');
     }
 }

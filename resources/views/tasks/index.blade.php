@@ -3,10 +3,12 @@
 @section('title', 'Dashboard | TaskFlow Studio')
 
 @php
-    $allTasks = $myTasks->concat($teamTasks);
+    $filteredTasks = $myTasks->concat($teamTasks);
     $totalTasks = $allTasks->count();
+    $activeTasks = $allTasks->where('status', \App\Enums\TaskStatus::InProgress)->count();
     $completedTasks = $allTasks->where('status', \App\Enums\TaskStatus::Completed)->count();
     $overdueTasks = $allTasks->filter(fn ($task) => $task->isOverdue())->values();
+    $dueSoonTasks = $allTasks->filter(fn ($task) => $task->isDueSoon())->values();
 @endphp
 
 @section('content')
@@ -30,7 +32,11 @@
                 </article>
                 <article class="rounded-3xl border border-stone-900/10 bg-white/75 p-5">
                     <p class="text-xs uppercase tracking-[0.24em] text-stone-500">My tasks</p>
-                    <p class="mt-3 text-3xl font-semibold text-stone-950">{{ $myTasks->count() }}</p>
+                    <p class="mt-3 text-3xl font-semibold text-stone-950">{{ $allTasks->filter(fn ($task) => $task->created_by === auth()->id() || $task->assigned_to === auth()->id())->count() }}</p>
+                </article>
+                <article class="rounded-3xl border border-stone-900/10 bg-white/75 p-5">
+                    <p class="text-xs uppercase tracking-[0.24em] text-stone-500">Active now</p>
+                    <p class="mt-3 text-3xl font-semibold text-stone-950">{{ $activeTasks }}</p>
                 </article>
                 <article class="rounded-3xl border border-stone-900/10 bg-white/75 p-5">
                     <p class="text-xs uppercase tracking-[0.24em] text-stone-500">Completed</p>
@@ -40,10 +46,84 @@
                     <p class="text-xs uppercase tracking-[0.24em] text-rose-600">Overdue</p>
                     <p class="mt-3 text-3xl font-semibold text-rose-900">{{ $overdueTasks->count() }}</p>
                 </article>
+                <article class="rounded-3xl border border-amber-200 bg-amber-50 p-5">
+                    <p class="text-xs uppercase tracking-[0.24em] text-amber-700">Due soon</p>
+                    <p class="mt-3 text-3xl font-semibold text-amber-900">{{ $dueSoonTasks->count() }}</p>
+                </article>
             </div>
         </aside>
 
         <div class="space-y-6">
+            <section class="rounded-[2rem] border border-stone-900/10 bg-white/75 p-7">
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                        <p class="text-sm uppercase tracking-[0.24em] text-stone-500">Find work fast</p>
+                        <h2 class="mt-2 font-serif text-2xl text-stone-950">Search and filter the workspace</h2>
+                    </div>
+                    <span class="rounded-full border border-stone-900/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-stone-600">
+                        {{ $filteredTasks->count() }} matches
+                    </span>
+                </div>
+
+                <form method="GET" action="{{ route('dashboard') }}" class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                    <div class="xl:col-span-2">
+                        <label for="search" class="sr-only">Search tasks</label>
+                        <input id="search" type="text" name="search" value="{{ $filters['search'] }}" class="w-full rounded-2xl border border-stone-900/10 bg-white px-4 py-3 text-stone-900 outline-none transition focus:border-stone-950" placeholder="Search title or description">
+                    </div>
+
+                    <div>
+                        <label for="status_filter" class="sr-only">Status</label>
+                        <select id="status_filter" name="status" class="w-full rounded-2xl border border-stone-900/10 bg-white px-4 py-3 text-stone-900 outline-none transition focus:border-stone-950">
+                            <option value="">All statuses</option>
+                            @foreach ($statuses as $status)
+                                <option value="{{ $status->value }}" @selected($filters['status'] === $status->value)>
+                                    {{ str($status->value)->replace('_', ' ')->title() }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="priority_filter" class="sr-only">Priority</label>
+                        <select id="priority_filter" name="priority" class="w-full rounded-2xl border border-stone-900/10 bg-white px-4 py-3 text-stone-900 outline-none transition focus:border-stone-950">
+                            <option value="">All priorities</option>
+                            @foreach ($priorities as $priority)
+                                <option value="{{ $priority->value }}" @selected($filters['priority'] === $priority->value)>
+                                    {{ str($priority->value)->replace('_', ' ')->title() }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="assigned_filter" class="sr-only">Assignee</label>
+                        <select id="assigned_filter" name="assigned_to" class="w-full rounded-2xl border border-stone-900/10 bg-white px-4 py-3 text-stone-900 outline-none transition focus:border-stone-950">
+                            <option value="">All assignees</option>
+                            @foreach ($users as $user)
+                                <option value="{{ $user->id }}" @selected((string) $filters['assigned_to'] === (string) $user->id)>
+                                    {{ $user->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="md:col-span-2 xl:col-span-5 flex flex-wrap items-center gap-3">
+                        <label class="inline-flex items-center gap-3 rounded-full border border-stone-900/10 bg-stone-50 px-4 py-2 text-sm text-stone-700">
+                            <input type="checkbox" name="overdue" value="1" @checked($filters['overdue']) class="h-4 w-4 rounded border-stone-300 text-rose-600 focus:ring-rose-400">
+                            Overdue only
+                        </label>
+
+                        <button type="submit" class="inline-flex items-center rounded-full bg-stone-950 px-5 py-3 text-sm font-semibold text-stone-50 transition hover:bg-stone-800">
+                            Apply filters
+                        </button>
+
+                        <a href="{{ route('dashboard') }}" class="inline-flex items-center rounded-full border border-stone-900/10 bg-white px-5 py-3 text-sm font-medium text-stone-700 transition hover:border-stone-900/30 hover:text-stone-950">
+                            Reset
+                        </a>
+                    </div>
+                </form>
+            </section>
+
             @if ($overdueTasks->isNotEmpty())
                 <section class="rounded-[2rem] border border-rose-200 bg-[linear-gradient(135deg,_rgba(254,226,226,0.92),_rgba(255,251,235,0.95))] p-7 shadow-sm">
                     <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">

@@ -17,8 +17,21 @@ class TaskController extends Controller
     public function index(): View
     {
         $user = auth()->user();
+        $filters = [
+            'search' => request('search'),
+            'status' => request('status'),
+            'priority' => request('priority'),
+            'assigned_to' => request('assigned_to'),
+            'overdue' => request()->boolean('overdue'),
+        ];
+
         $tasks = Task::query()
             ->with(['creator', 'assignee'])
+            ->search($filters['search'])
+            ->forStatus($filters['status'])
+            ->forPriority($filters['priority'])
+            ->assignedTo($filters['assigned_to'] ? (int) $filters['assigned_to'] : null)
+            ->when($filters['overdue'], fn ($query) => $query->overdue())
             ->latest()
             ->get();
 
@@ -30,12 +43,19 @@ class TaskController extends Controller
             fn (Task $task): bool => $task->created_by === $user->id || $task->assigned_to === $user->id,
         )->values();
 
+        $allTasks = Task::query()
+            ->with(['creator', 'assignee'])
+            ->latest()
+            ->get();
+
         return view('tasks.index', [
             'myTasks' => $myTasks,
             'teamTasks' => $teamTasks,
+            'allTasks' => $allTasks,
             'users' => User::query()->orderBy('name')->get(),
             'priorities' => TaskPriority::cases(),
             'statuses' => TaskStatus::cases(),
+            'filters' => $filters,
         ]);
     }
 

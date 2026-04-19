@@ -133,4 +133,58 @@ class TaskManagementTest extends TestCase
         $response->assertRedirect('/dashboard');
         $this->assertDatabaseMissing('tasks', ['id' => $task->id]);
     }
+
+    public function test_dashboard_filters_tasks_by_search_and_priority(): void
+    {
+        $user = User::factory()->create();
+
+        Task::factory()->create([
+            'title' => 'Launch marketing page',
+            'description' => 'High priority landing page',
+            'priority' => TaskPriority::High,
+            'created_by' => $user->id,
+            'assigned_to' => null,
+        ]);
+
+        Task::factory()->create([
+            'title' => 'Update onboarding docs',
+            'description' => 'Internal notes refresh',
+            'priority' => TaskPriority::Low,
+            'created_by' => $user->id,
+            'assigned_to' => null,
+        ]);
+
+        $response = $this->actingAs($user)->get('/dashboard?search=Launch&priority=high');
+
+        $response->assertOk()
+            ->assertSee('Launch marketing page')
+            ->assertDontSee('Update onboarding docs');
+    }
+
+    public function test_dashboard_can_filter_overdue_tasks_only(): void
+    {
+        $user = User::factory()->create();
+
+        Task::factory()->create([
+            'title' => 'Expired support handoff',
+            'due_at' => now()->subHour(),
+            'status' => TaskStatus::InProgress,
+            'created_by' => $user->id,
+            'assigned_to' => null,
+        ]);
+
+        Task::factory()->create([
+            'title' => 'Healthy design review',
+            'due_at' => now()->addHour(),
+            'status' => TaskStatus::InProgress,
+            'created_by' => $user->id,
+            'assigned_to' => null,
+        ]);
+
+        $response = $this->actingAs($user)->get('/dashboard?overdue=1');
+
+        $response->assertOk()
+            ->assertSee('Expired support handoff')
+            ->assertDontSee('Healthy design review');
+    }
 }

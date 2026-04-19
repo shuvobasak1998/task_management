@@ -119,10 +119,25 @@ class Task extends Model
             ->where('status', '!=', TaskStatus::Completed->value);
     }
 
+    public function scopeDueSoon(Builder $query): Builder
+    {
+        return $query->whereNotNull('due_at')
+            ->whereBetween('due_at', [now(), now()->addDay()])
+            ->where('status', '!=', TaskStatus::Completed->value);
+    }
+
     public function isOverdue(): bool
     {
         return $this->due_at instanceof Carbon
             && $this->due_at->isPast()
+            && $this->status !== TaskStatus::Completed;
+    }
+
+    public function isDueSoon(): bool
+    {
+        return $this->due_at instanceof Carbon
+            && $this->due_at->isFuture()
+            && $this->due_at->lte(now()->addDay())
             && $this->status !== TaskStatus::Completed;
     }
 

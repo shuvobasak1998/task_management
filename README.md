@@ -1,58 +1,208 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# TaskFlow Studio
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+TaskFlow Studio is a polished Laravel-based task management system for small teams. It focuses on secure access, clear task ownership, fast progress updates, live countdown timing, and a dashboard that makes work status easy to understand at a glance.
 
-## About Laravel
+This project was built with a recruiter-facing mindset:
+- clean architecture
+- clear commit history
+- focused feature scope
+- practical security
+- strong behavior-driven tests
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Features
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- Authentication with register, login, logout, and protected dashboard access
+- Shared team workspace with task creator and assignee ownership
+- Full task CRUD
+- Task status tracking: `pending`, `in_progress`, `completed`
+- Progress bar with one-click updates
+- Automatic progress/status synchronization
+- Live countdown clock per task
+- Overdue and due-soon visibility
+- Search and filtering by status, priority, assignee, and overdue state
+- Dashboard insights for total, active, completed, due-soon, and overdue work
+- Authorization rules for update/delete/progress actions
+- Feature tests covering core workflows and edge cases
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Tech Stack
 
-## Learning Laravel
+- PHP 8.3
+- Laravel 13
+- Blade
+- Tailwind CSS 4
+- Vite
+- MySQL
+- PHPUnit
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Core Product Decisions
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- Authentication is included because this is a team-facing system and should not be openly editable by anyone.
+- Team management is intentionally kept lightweight: one shared workspace instead of multi-tenant organization management.
+- The timer is estimate-based, not a manual timesheet system.
+- Progress and status are intentionally linked:
+  - setting progress to `100` completes the task
+  - marking a task completed sets progress to `100`
+- The project favors a polished and believable scope over adding enterprise-level complexity.
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+## Authorization Rules
 
-## Agentic Development
+- Any authenticated user can view the dashboard and create tasks
+- Task creator or assignee can update a task
+- Only the task creator can delete a task
+- Unauthorized task updates, deletions, and progress actions are blocked server-side
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Setup
+
+### 1. Clone the project
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+git clone <your-repository-url>
+cd task_management
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### 2. Install backend dependencies
 
-## Contributing
+```bash
+composer install
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 3. Create environment file
 
-## Code of Conduct
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 4. Configure MySQL
 
-## Security Vulnerabilities
+Update `.env` with your local MySQL credentials:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=task_management
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
+```
 
-## License
+Create the database manually in MySQL before running migrations.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### 5. Run database migrations
+
+```bash
+php artisan migrate
+```
+
+### 6. Install frontend dependencies
+
+This repo already uses `.npmrc` with `ignore-scripts=true`, so a normal install is fine:
+
+```bash
+npm install
+```
+
+### 7. Run the app
+
+In one terminal:
+
+```bash
+php artisan serve
+```
+
+In another terminal:
+
+```bash
+npm run dev
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8000
+```
+
+## Running Tests
+
+```bash
+php artisan test
+```
+
+The test suite covers:
+- authentication access
+- task creation, update, and deletion
+- task policy rules
+- one-click progress actions
+- progress/status synchronization
+- overdue and timer state behavior
+- search and filtering
+- validation and authorization edge cases
+
+## Project Structure
+
+High-level organization:
+
+- `app/Http/Controllers`
+  - auth flow and task actions
+- `app/Http/Requests`
+  - request validation for task create/update
+- `app/Models`
+  - `User` and `Task` domain models
+- `app/Policies`
+  - task authorization rules
+- `app/Enums`
+  - status and priority enums
+- `resources/views`
+  - Blade layouts, auth screens, dashboard, task views
+- `tests/Feature`
+  - end-to-end behavior tests
+
+## Testing Approach
+
+The testing strategy is intentionally behavior-focused rather than only model-focused.
+
+Key priorities:
+- protect business rules
+- verify authorization boundaries
+- confirm the dashboard behaves correctly under normal use
+- validate the most important recruiter-visible features
+
+The app uses feature tests heavily because the most valuable risks here are cross-layer:
+- route protection
+- form validation
+- policy enforcement
+- lifecycle synchronization
+- dashboard rendering logic
+
+## Assumptions
+
+- This is a small internal team tool, not a public SaaS product
+- One shared workspace is enough for the scope of this assignment
+- Email verification, notifications, attachments, comments, and advanced RBAC are intentionally out of scope
+- The timer reflects estimated delivery time, not employee timesheet tracking
+
+## Future Improvements
+
+- Activity timeline per task
+- Task comments
+- Board/list view toggle
+- Seeder with richer demo workspace data
+- Avatar support and profile settings
+- Notifications for overdue or reassigned work
+- Role-based admin controls
+
+## Commit History Strategy
+
+The implementation was intentionally split into small milestone commits:
+
+1. project foundation and authentication
+2. task domain and authorization rules
+3. dashboard CRUD flows
+4. progress actions
+5. live timer and overdue logic
+6. search, filters, and insights
+7. UI polish
+8. testing pass
+9. documentation
+
+This structure is meant to make the repository easier to review and to show a disciplined build process.

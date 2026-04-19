@@ -50,6 +50,12 @@
                     </div>
                 @endif
 
+                @if ($errors->any())
+                    <div class="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-900">
+                        <p class="font-semibold">Please review the highlighted fields and try again.</p>
+                    </div>
+                @endif
+
                 @yield('content')
             </main>
         </div>

@@ -13,8 +13,8 @@
 
 @section('content')
     <section class="grid gap-6 xl:grid-cols-[0.95fr_1.35fr]">
-        <aside class="space-y-6">
-            <div class="rounded-[2rem] border border-stone-900/10 bg-white/80 p-7 shadow-[0_24px_80px_-32px_rgba(48,33,21,0.35)] backdrop-blur">
+        <aside class="space-y-6 xl:sticky xl:top-6 xl:self-start">
+            <div class="panel-surface bg-white/80 p-7">
                 <p class="text-sm uppercase tracking-[0.3em] text-stone-500">Create task</p>
                 <h1 class="mt-3 font-serif text-3xl tracking-tight text-stone-950">Keep the whole team moving.</h1>
                 <p class="mt-3 text-sm leading-6 text-stone-600">Create a task, assign ownership, and keep the team workspace organized from one dashboard.</p>
@@ -26,27 +26,27 @@
             </div>
 
             <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
-                <article class="rounded-3xl border border-stone-900/10 bg-white/75 p-5">
+                <article class="metric-card">
                     <p class="text-xs uppercase tracking-[0.24em] text-stone-500">Total tasks</p>
                     <p class="mt-3 text-3xl font-semibold text-stone-950">{{ $totalTasks }}</p>
                 </article>
-                <article class="rounded-3xl border border-stone-900/10 bg-white/75 p-5">
+                <article class="metric-card">
                     <p class="text-xs uppercase tracking-[0.24em] text-stone-500">My tasks</p>
                     <p class="mt-3 text-3xl font-semibold text-stone-950">{{ $allTasks->filter(fn ($task) => $task->created_by === auth()->id() || $task->assigned_to === auth()->id())->count() }}</p>
                 </article>
-                <article class="rounded-3xl border border-stone-900/10 bg-white/75 p-5">
+                <article class="metric-card">
                     <p class="text-xs uppercase tracking-[0.24em] text-stone-500">Active now</p>
                     <p class="mt-3 text-3xl font-semibold text-stone-950">{{ $activeTasks }}</p>
                 </article>
-                <article class="rounded-3xl border border-stone-900/10 bg-white/75 p-5">
+                <article class="metric-card">
                     <p class="text-xs uppercase tracking-[0.24em] text-stone-500">Completed</p>
                     <p class="mt-3 text-3xl font-semibold text-stone-950">{{ $completedTasks }}</p>
                 </article>
-                <article class="rounded-3xl border border-rose-200 bg-rose-50 p-5">
+                <article class="metric-card-alert">
                     <p class="text-xs uppercase tracking-[0.24em] text-rose-600">Overdue</p>
                     <p class="mt-3 text-3xl font-semibold text-rose-900">{{ $overdueTasks->count() }}</p>
                 </article>
-                <article class="rounded-3xl border border-amber-200 bg-amber-50 p-5">
+                <article class="metric-card-accent">
                     <p class="text-xs uppercase tracking-[0.24em] text-amber-700">Due soon</p>
                     <p class="mt-3 text-3xl font-semibold text-amber-900">{{ $dueSoonTasks->count() }}</p>
                 </article>
@@ -54,7 +54,7 @@
         </aside>
 
         <div class="space-y-6">
-            <section class="rounded-[2rem] border border-stone-900/10 bg-white/75 p-7">
+            <section class="panel-surface p-7">
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <div>
                         <p class="text-sm uppercase tracking-[0.24em] text-stone-500">Find work fast</p>
@@ -68,12 +68,12 @@
                 <form method="GET" action="{{ route('dashboard') }}" class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                     <div class="xl:col-span-2">
                         <label for="search" class="sr-only">Search tasks</label>
-                        <input id="search" type="text" name="search" value="{{ $filters['search'] }}" class="w-full rounded-2xl border border-stone-900/10 bg-white px-4 py-3 text-stone-900 outline-none transition focus:border-stone-950" placeholder="Search title or description">
+                        <input id="search" type="text" name="search" value="{{ $filters['search'] }}" class="soft-input" placeholder="Search title or description">
                     </div>
 
                     <div>
                         <label for="status_filter" class="sr-only">Status</label>
-                        <select id="status_filter" name="status" class="w-full rounded-2xl border border-stone-900/10 bg-white px-4 py-3 text-stone-900 outline-none transition focus:border-stone-950">
+                        <select id="status_filter" name="status" class="soft-input">
                             <option value="">All statuses</option>
                             @foreach ($statuses as $status)
                                 <option value="{{ $status->value }}" @selected($filters['status'] === $status->value)>
@@ -85,7 +85,7 @@
 
                     <div>
                         <label for="priority_filter" class="sr-only">Priority</label>
-                        <select id="priority_filter" name="priority" class="w-full rounded-2xl border border-stone-900/10 bg-white px-4 py-3 text-stone-900 outline-none transition focus:border-stone-950">
+                        <select id="priority_filter" name="priority" class="soft-input">
                             <option value="">All priorities</option>
                             @foreach ($priorities as $priority)
                                 <option value="{{ $priority->value }}" @selected($filters['priority'] === $priority->value)>
@@ -97,7 +97,7 @@
 
                     <div>
                         <label for="assigned_filter" class="sr-only">Assignee</label>
-                        <select id="assigned_filter" name="assigned_to" class="w-full rounded-2xl border border-stone-900/10 bg-white px-4 py-3 text-stone-900 outline-none transition focus:border-stone-950">
+                        <select id="assigned_filter" name="assigned_to" class="soft-input">
                             <option value="">All assignees</option>
                             @foreach ($users as $user)
                                 <option value="{{ $user->id }}" @selected((string) $filters['assigned_to'] === (string) $user->id)>
@@ -113,11 +113,11 @@
                             Overdue only
                         </label>
 
-                        <button type="submit" class="inline-flex items-center rounded-full bg-stone-950 px-5 py-3 text-sm font-semibold text-stone-50 transition hover:bg-stone-800">
+                        <button type="submit" class="primary-pill">
                             Apply filters
                         </button>
 
-                        <a href="{{ route('dashboard') }}" class="inline-flex items-center rounded-full border border-stone-900/10 bg-white px-5 py-3 text-sm font-medium text-stone-700 transition hover:border-stone-900/30 hover:text-stone-950">
+                        <a href="{{ route('dashboard') }}" class="secondary-pill">
                             Reset
                         </a>
                     </div>
@@ -125,7 +125,7 @@
             </section>
 
             @if ($overdueTasks->isNotEmpty())
-                <section class="rounded-[2rem] border border-rose-200 bg-[linear-gradient(135deg,_rgba(254,226,226,0.92),_rgba(255,251,235,0.95))] p-7 shadow-sm">
+                <section class="panel-surface border-rose-200 bg-[linear-gradient(135deg,_rgba(254,226,226,0.92),_rgba(255,251,235,0.95))] p-7 shadow-sm">
                     <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                         <div>
                             <p class="text-sm uppercase tracking-[0.24em] text-rose-700">Needs attention</p>
@@ -149,7 +149,7 @@
                 </section>
             @endif
 
-            <section class="rounded-[2rem] border border-stone-900/10 bg-white/75 p-7">
+            <section class="panel-surface p-7">
                 <div class="flex items-center justify-between gap-4">
                     <div>
                         <p class="text-sm uppercase tracking-[0.24em] text-stone-500">My work</p>
@@ -169,7 +169,7 @@
                 </div>
             </section>
 
-            <section class="rounded-[2rem] border border-stone-900/10 bg-white/75 p-7">
+            <section class="panel-surface p-7">
                 <div class="flex items-center justify-between gap-4">
                     <div>
                         <p class="text-sm uppercase tracking-[0.24em] text-stone-500">Team board</p>

@@ -23,7 +23,7 @@
     };
 @endphp
 
-<article class="rounded-3xl border {{ $isOverdue ? 'border-rose-200 bg-rose-50/60' : 'border-stone-900/10 bg-white' }} p-5 shadow-sm">
+<article class="task-card-shell rounded-3xl border {{ $isOverdue ? 'border-rose-200 bg-rose-50/60' : 'border-stone-900/10 bg-white' }} p-5 shadow-sm">
     <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div class="space-y-4">
             <div class="flex flex-wrap items-center gap-2">

@@ -10,3 +10,47 @@
         'Segoe UI Symbol', 'Noto Color Emoji';
     --font-serif: 'Fraunces', Georgia, Cambria, 'Times New Roman', Times, serif;
 }
+
+@layer base {
+    :root {
+        --surface-panel: rgba(255, 255, 255, 0.78);
+        --surface-strong: rgba(255, 255, 255, 0.92);
+        --border-soft: rgba(41, 37, 36, 0.1);
+        --shadow-soft: 0 24px 80px -32px rgba(48, 33, 21, 0.35);
+    }
+}
+
+@layer components {
+    .panel-surface {
+        @apply rounded-[2rem] border border-stone-900/10 bg-white/75 backdrop-blur;
+        box-shadow: var(--shadow-soft);
+    }
+
+    .metric-card {
+        @apply rounded-3xl border border-stone-900/10 bg-white/75 p-5 transition duration-300 hover:-translate-y-0.5 hover:border-stone-900/20 hover:shadow-lg;
+    }
+
+    .metric-card-accent {
+        @apply rounded-3xl border border-amber-200 bg-amber-50 p-5 transition duration-300 hover:-translate-y-0.5 hover:shadow-lg;
+    }
+
+    .metric-card-alert {
+        @apply rounded-3xl border border-rose-200 bg-rose-50 p-5 transition duration-300 hover:-translate-y-0.5 hover:shadow-lg;
+    }
+
+    .task-card-shell {
+        @apply transition duration-300 hover:-translate-y-0.5 hover:shadow-xl;
+    }
+
+    .soft-input {
+        @apply w-full rounded-2xl border border-stone-900/10 bg-white px-4 py-3 text-stone-900 outline-none transition focus:border-stone-950;
+    }
+
+    .primary-pill {
+        @apply inline-flex items-center rounded-full bg-stone-950 px-5 py-3 text-sm font-semibold text-stone-50 transition hover:bg-stone-800;
+    }
+
+    .secondary-pill {
+        @apply inline-flex items-center rounded-full border border-stone-900/10 bg-white px-5 py-3 text-sm font-medium text-stone-700 transition hover:border-stone-900/30 hover:text-stone-950;
+    }
+}

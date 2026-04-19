@@ -1,4 +1,7 @@
 @php
+    $isOverdue = $task->isOverdue();
+    $remainingSeconds = $task->remainingSeconds();
+
     $statusClasses = [
         'pending' => 'bg-stone-100 text-stone-700',
         'in_progress' => 'bg-amber-100 text-amber-900',
@@ -10,9 +13,17 @@
         'medium' => 'bg-orange-100 text-orange-900',
         'high' => 'bg-rose-100 text-rose-900',
     ];
+
+    $formatCountdown = static function (int $seconds): string {
+        $hours = intdiv($seconds, 3600);
+        $minutes = intdiv($seconds % 3600, 60);
+        $remaining = $seconds % 60;
+
+        return sprintf('%02d:%02d:%02d', $hours, $minutes, $remaining);
+    };
 @endphp
 
-<article class="rounded-3xl border border-stone-900/10 bg-white p-5 shadow-sm">
+<article class="rounded-3xl border {{ $isOverdue ? 'border-rose-200 bg-rose-50/60' : 'border-stone-900/10 bg-white' }} p-5 shadow-sm">
     <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div class="space-y-4">
             <div class="flex flex-wrap items-center gap-2">
@@ -40,16 +51,38 @@
                 @endif
             </div>
 
-            <div class="space-y-3">
-                <div class="flex items-center justify-between gap-4 text-sm">
-                    <span class="font-medium text-stone-700">Progress</span>
-                    <span class="font-semibold text-stone-950">{{ $task->progress_percent }}%</span>
+            <div class="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between gap-4 text-sm">
+                        <span class="font-medium text-stone-700">Progress</span>
+                        <span class="font-semibold text-stone-950">{{ $task->progress_percent }}%</span>
+                    </div>
+
+                    <div class="h-3 overflow-hidden rounded-full bg-stone-200">
+                        <div class="h-full rounded-full bg-gradient-to-r from-amber-400 via-orange-500 to-emerald-500 transition-all" style="width: {{ $task->progress_percent }}%"></div>
+                    </div>
                 </div>
 
-                <div class="h-3 overflow-hidden rounded-full bg-stone-200">
-                    <div class="h-full rounded-full bg-gradient-to-r from-amber-400 via-orange-500 to-emerald-500 transition-all" style="width: {{ $task->progress_percent }}%"></div>
+                <div class="rounded-2xl border {{ $isOverdue ? 'border-rose-200 bg-rose-100 text-rose-900' : 'border-stone-900/10 bg-stone-50 text-stone-900' }} px-4 py-3">
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.24em] {{ $isOverdue ? 'text-rose-700' : 'text-stone-500' }}">Live clock</p>
+                    @if ($task->status === \App\Enums\TaskStatus::Completed)
+                        <p class="mt-2 text-lg font-semibold">Timer stopped</p>
+                        <p class="mt-1 text-xs uppercase tracking-[0.2em] text-emerald-700">Completed</p>
+                    @elseif ($isOverdue || $remainingSeconds === 0)
+                        <p class="mt-2 text-lg font-semibold">00:00:00</p>
+                        <p class="mt-1 text-xs uppercase tracking-[0.2em] text-rose-700">Time expired</p>
+                    @else
+                        <p class="mt-2 text-lg font-semibold" data-countdown-seconds="{{ $remainingSeconds }}">{{ $formatCountdown($remainingSeconds) }}</p>
+                        <p class="mt-1 text-xs uppercase tracking-[0.2em] text-amber-700">Counting down</p>
+                    @endif
                 </div>
             </div>
+
+            @if ($isOverdue)
+                <div class="rounded-2xl border border-rose-200 bg-rose-100 px-4 py-3 text-sm text-rose-900">
+                    This task is overdue. It reached the end of its estimated time before completion.
+                </div>
+            @endif
         </div>
 
         <div class="flex flex-wrap gap-3 lg:max-w-xs lg:justify-end">

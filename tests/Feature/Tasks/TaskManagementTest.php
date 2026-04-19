@@ -39,6 +39,32 @@ class TaskManagementTest extends TestCase
             ->assertSee('Shared workspace activity');
     }
 
+    public function test_dashboard_surfaces_overdue_and_completed_timer_states(): void
+    {
+        $user = User::factory()->create();
+
+        Task::factory()->create([
+            'title' => 'Overdue migration',
+            'created_by' => $user->id,
+            'assigned_to' => null,
+            'due_at' => now()->subHour(),
+            'status' => TaskStatus::InProgress,
+        ]);
+
+        Task::factory()->completed()->create([
+            'title' => 'Completed launch review',
+            'created_by' => $user->id,
+            'assigned_to' => null,
+        ]);
+
+        $response = $this->actingAs($user)->get('/dashboard');
+
+        $response->assertOk()
+            ->assertSee('Some tasks have run out of time.')
+            ->assertSee('Time expired')
+            ->assertSee('Timer stopped');
+    }
+
     public function test_authenticated_user_can_create_task(): void
     {
         $creator = User::factory()->create();

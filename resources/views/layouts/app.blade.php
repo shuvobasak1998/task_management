@@ -6,7 +6,9 @@
         <title>@yield('title', config('app.name', 'TaskFlow'))</title>
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=fraunces:500,600,700|instrument-sans:400,500,600,700" rel="stylesheet" />
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
+            @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @endif
     </head>
     <body class="min-h-screen bg-[radial-gradient(circle_at_top,_#f7f1e8,_#f2e6d7_42%,_#e7ddd2_100%)] text-stone-900 antialiased">
         <div class="relative min-h-screen overflow-hidden">

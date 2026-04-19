@@ -10,7 +10,7 @@ use App\Models\Task;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Collection;
+use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
@@ -78,6 +78,31 @@ class TaskController extends Controller
 
         return redirect()->route('dashboard')
             ->with('status', 'Task updated successfully.');
+    }
+
+    public function progress(Request $request, Task $task): RedirectResponse
+    {
+        $this->authorize('update', $task);
+
+        $validated = $request->validate([
+            'delta' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'target_progress' => ['nullable', 'integer', 'between:0,100'],
+        ]);
+
+        $targetProgress = $validated['target_progress']
+            ?? min(100, $task->progress_percent + ($validated['delta'] ?? 0));
+
+        $status = $targetProgress >= 100
+            ? TaskStatus::Completed
+            : ($targetProgress > 0 ? TaskStatus::InProgress : TaskStatus::Pending);
+
+        $task->update([
+            'progress_percent' => $targetProgress,
+            'status' => $status,
+        ]);
+
+        return redirect()->route('dashboard')
+            ->with('status', 'Task progress updated successfully.');
     }
 
     public function destroy(Task $task): RedirectResponse

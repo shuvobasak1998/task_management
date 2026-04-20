@@ -11,6 +11,6 @@
     ];
 @endphp
 
-<span {{ $attributes->class(['rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]', $classes[$value] ?? $classes['pending']]) }}>
+<span {{ $attributes->class(['inline-flex whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]', $classes[$value] ?? $classes['pending']]) }}>
     {{ str($value)->replace('_', ' ') }}
 </span>

@@ -46,9 +46,8 @@ class TaskPageDataBuilder
             ->latest()
             ->get();
 
-        $myTasksCount = $allTasks->filter(
-            fn (Task $task): bool => $task->created_by === $user->id || $task->assigned_to === $user->id,
-        )->count();
+        $createdByMeCount = $allTasks->where('created_by', $user->id)->count();
+        $assignedToMeCount = $allTasks->where('assigned_to', $user->id)->count();
 
         $overdueTasks = $allTasks->filter(fn (Task $task): bool => $task->isOverdue())->values();
         $dueSoonTasks = $allTasks->filter(fn (Task $task): bool => $task->isDueSoon())->values();
@@ -56,7 +55,8 @@ class TaskPageDataBuilder
         $monthlyCompletionChart = $this->monthlyCompletionChart($allTasks);
         $dashboardStats = [
             ['label' => 'Total tasks', 'value' => $allTasks->count(), 'variant' => 'default'],
-            ['label' => 'My tasks', 'value' => $myTasksCount, 'variant' => 'default'],
+            ['label' => 'Assigned to me', 'value' => $assignedToMeCount, 'variant' => 'default'],
+            ['label' => 'Created by me', 'value' => $createdByMeCount, 'variant' => 'default'],
             ['label' => 'Active now', 'value' => $allTasks->where('status', TaskStatus::InProgress)->count(), 'variant' => 'default'],
             ['label' => 'Completed', 'value' => $allTasks->where('status', TaskStatus::Completed)->count(), 'variant' => 'default'],
             ['label' => 'Overdue', 'value' => $overdueTasks->count(), 'variant' => 'alert'],
@@ -66,7 +66,8 @@ class TaskPageDataBuilder
         return [
             'filteredTasks' => $filteredTasks,
             'allTasks' => $allTasks,
-            'myTasksCount' => $myTasksCount,
+            'createdByMeCount' => $createdByMeCount,
+            'assignedToMeCount' => $assignedToMeCount,
             'dashboardStats' => $dashboardStats,
             'overdueTasks' => $overdueTasks,
             'dueSoonTasks' => $dueSoonTasks,

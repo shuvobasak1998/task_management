@@ -67,7 +67,21 @@
 
     <div class="space-y-2">
         <label for="due_at" class="text-sm font-medium text-stone-200">Due at</label>
-        <input id="due_at" type="datetime-local" name="due_at" value="{{ old('due_at', optional($task?->due_at)->format('Y-m-d\TH:i')) }}" class="soft-input">
+        <div class="relative">
+            <input
+                id="due_at"
+                type="datetime-local"
+                name="due_at"
+                value="{{ old('due_at', optional($task?->due_at)->format('Y-m-d\TH:i')) }}"
+                class="soft-input pr-14"
+            >
+            <div class="pointer-events-none absolute inset-y-0 right-4 flex items-center text-amber-300/80">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 2v3m8-3v3M4 9h16M6.5 5h11A1.5 1.5 0 0 1 19 6.5v11A1.5 1.5 0 0 1 17.5 19h-11A1.5 1.5 0 0 1 5 17.5v-11A1.5 1.5 0 0 1 6.5 5Zm5.5 7v3l2 1.5" />
+                </svg>
+            </div>
+        </div>
+        <p class="text-xs text-stone-400">Pick both date and time from the calendar.</p>
         @error('due_at')
             <p class="text-sm text-rose-300">{{ $message }}</p>
         @enderror

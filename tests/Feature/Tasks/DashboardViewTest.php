@@ -15,6 +15,7 @@ class DashboardViewTest extends TestCase
     public function test_authenticated_user_can_view_dashboard_analytics(): void
     {
         $user = User::factory()->create();
+        $assignee = User::factory()->create();
 
         Task::factory()->create([
             'title' => 'Shared backlog grooming',
@@ -23,10 +24,19 @@ class DashboardViewTest extends TestCase
             'status' => TaskStatus::InProgress,
         ]);
 
+        Task::factory()->create([
+            'title' => 'Assigned design QA',
+            'created_by' => $assignee->id,
+            'assigned_to' => $user->id,
+            'status' => TaskStatus::Pending,
+        ]);
+
         $response = $this->actingAs($user)->get('/dashboard');
 
         $response->assertOk()
             ->assertSee('Analytical clarity for the whole workspace.')
+            ->assertSee('Assigned to me')
+            ->assertSee('Created by me')
             ->assertSee('Monthly completed ratio')
             ->assertSee('Status distribution')
             ->assertSee('Overdue tasks')
@@ -71,6 +81,8 @@ class DashboardViewTest extends TestCase
         $response->assertOk()
             ->assertSee('Create a task from the dashboard')
             ->assertSee('Total tasks')
+            ->assertSee('Assigned to me')
+            ->assertSee('Created by me')
             ->assertSee('Due soon');
     }
 }

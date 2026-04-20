@@ -143,15 +143,16 @@ class Task extends Model
 
     public function remainingSeconds(): int
     {
-        $startedAt = $this->started_at ?? $this->created_at;
-
-        if (! $startedAt instanceof Carbon) {
+        if (! $this->due_at instanceof Carbon || ! $this->created_at instanceof Carbon) {
             return 0;
         }
 
-        $endsAt = $startedAt->copy()->addMinutes($this->estimated_minutes);
+        if ($this->due_at->lte($this->created_at)) {
+            return 0;
+        }
+
         $reference = $this->completed_at ?? now();
 
-        return max(0, $reference->diffInSeconds($endsAt, false));
+        return max(0, $reference->diffInSeconds($this->due_at, false));
     }
 }

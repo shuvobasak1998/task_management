@@ -48,11 +48,7 @@
                 </section>
 
                 <section class="rounded-[2rem] border border-white/10 bg-white/10 p-6 shadow-2xl shadow-black/30 backdrop-blur-xl sm:p-8">
-                    @if (session('status'))
-                        <div class="mb-6 rounded-2xl border border-emerald-400/25 bg-emerald-400/10 px-5 py-4 text-sm text-emerald-100">
-                            {{ session('status') }}
-                        </div>
-                    @endif
+                    <x-app.flash-messages />
 
                     @yield('content')
                 </section>

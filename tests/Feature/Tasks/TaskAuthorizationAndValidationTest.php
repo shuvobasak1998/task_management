@@ -15,7 +15,6 @@ class TaskAuthorizationAndValidationTest extends TestCase
     {
         $response = $this->post('/tasks', [
             'title' => 'Blocked guest task',
-            'estimated_minutes' => 30,
         ]);
 
         $response->assertRedirect('/login');
@@ -27,13 +26,12 @@ class TaskAuthorizationAndValidationTest extends TestCase
 
         $response = $this->actingAs($user)->from('/dashboard')->post('/tasks', [
             'title' => '',
-            'estimated_minutes' => 0,
             'priority' => 'urgent',
             'status' => 'done',
         ]);
 
         $response->assertRedirect('/dashboard');
-        $response->assertSessionHasErrors(['title', 'estimated_minutes', 'priority', 'status']);
+        $response->assertSessionHasErrors(['title', 'priority', 'status']);
     }
 
     public function test_non_owner_cannot_update_task_details(): void
@@ -51,7 +49,6 @@ class TaskAuthorizationAndValidationTest extends TestCase
             'status' => 'pending',
             'progress_percent' => 10,
             'priority' => 'low',
-            'estimated_minutes' => 45,
             'assigned_to' => null,
         ]);
 

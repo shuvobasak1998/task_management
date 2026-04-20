@@ -18,7 +18,7 @@
             <div class="flex flex-wrap gap-5 text-sm text-stone-500">
                 <p>Created by <span class="font-medium text-stone-700">{{ $task->creator->name }}</span></p>
                 <p>Assigned to <span class="font-medium text-stone-700">{{ $task->assignee?->name ?? 'Unassigned' }}</span></p>
-                <p>Estimate <span class="font-medium text-stone-700">{{ $task->estimated_minutes }} min</span></p>
+                <p>Created <span class="font-medium text-stone-700">{{ $task->created_at?->format('M d, Y H:i') ?? 'Unknown' }}</span></p>
                 @if ($task->due_at)
                     <p>Due <span class="font-medium text-stone-700">{{ $task->due_at->format('M d, Y H:i') }}</span></p>
                 @endif
@@ -31,7 +31,7 @@
 
             @if ($isOverdue)
                 <div class="rounded-2xl border border-rose-200 bg-rose-100 px-4 py-3 text-sm text-rose-900">
-                    This task is overdue. It reached the end of its estimated time before completion.
+                    This task is overdue. The due time has passed before the task was completed.
                 </div>
             @endif
         </div>

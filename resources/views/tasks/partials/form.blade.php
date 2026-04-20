@@ -66,14 +66,6 @@
     </div>
 
     <div class="space-y-2">
-        <label for="estimated_minutes" class="text-sm font-medium text-stone-200">Estimated minutes</label>
-        <input id="estimated_minutes" type="number" min="1" max="10080" name="estimated_minutes" value="{{ old('estimated_minutes', $task?->estimated_minutes ?? 60) }}" required class="soft-input">
-        @error('estimated_minutes')
-            <p class="text-sm text-rose-300">{{ $message }}</p>
-        @enderror
-    </div>
-
-    <div class="space-y-2">
         <label for="due_at" class="text-sm font-medium text-stone-200">Due at</label>
         <input id="due_at" type="datetime-local" name="due_at" value="{{ old('due_at', optional($task?->due_at)->format('Y-m-d\TH:i')) }}" class="soft-input">
         @error('due_at')

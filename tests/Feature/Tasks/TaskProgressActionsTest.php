@@ -80,7 +80,6 @@ class TaskProgressActionsTest extends TestCase
 
         $response = $this->actingAs($creator)->from('/dashboard')->post('/tasks', [
             'title' => 'Dashboard-created task',
-            'estimated_minutes' => 90,
         ]);
 
         $response->assertRedirect('/dashboard');
@@ -96,7 +95,6 @@ class TaskProgressActionsTest extends TestCase
 
         $response = $this->actingAs($creator)->from('/tasks')->post('/tasks', [
             'title' => 'Workspace-created task',
-            'estimated_minutes' => 45,
         ]);
 
         $response->assertRedirect('/tasks');

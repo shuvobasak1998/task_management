@@ -27,7 +27,6 @@ class UpdateTaskRequest extends FormRequest
             'status' => ['required', Rule::in(TaskStatus::values())],
             'progress_percent' => ['required', 'integer', 'between:0,100'],
             'priority' => ['required', Rule::in(TaskPriority::values())],
-            'estimated_minutes' => ['required', 'integer', 'min:1', 'max:10080'],
             'started_at' => ['nullable', 'date'],
             'due_at' => ['nullable', 'date'],
             'assigned_to' => ['nullable', 'integer', 'exists:users,id'],

@@ -88,3 +88,31 @@ window.addEventListener('keydown', (event) => {
         }
     });
 });
+
+const closeFlashMessage = (element) => {
+    element.classList.add('pointer-events-none', 'opacity-0', '-translate-y-2');
+
+    window.setTimeout(() => {
+        element.remove();
+    }, 300);
+};
+
+document.querySelectorAll('[data-flash-message]').forEach((element) => {
+    const closeButton = element.querySelector('[data-flash-close]');
+
+    if (closeButton) {
+        closeButton.addEventListener('click', () => {
+            closeFlashMessage(element);
+        });
+    }
+
+    const timeout = Number.parseInt(element.dataset.flashTimeout ?? '0', 10);
+
+    if (! Number.isNaN(timeout) && timeout > 0) {
+        window.setTimeout(() => {
+            if (document.body.contains(element)) {
+                closeFlashMessage(element);
+            }
+        }, timeout);
+    }
+});

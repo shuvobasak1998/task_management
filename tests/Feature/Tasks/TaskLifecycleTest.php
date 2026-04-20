@@ -69,8 +69,8 @@ class TaskLifecycleTest extends TestCase
         Carbon::setTestNow('2026-04-20 08:00:00');
 
         $task = Task::factory()->for(User::factory(), 'creator')->create([
-            'estimated_minutes' => 120,
-            'started_at' => now()->subMinutes(100),
+            'created_at' => now()->subMinutes(100),
+            'due_at' => now()->addMinutes(20),
             'completed_at' => now()->subMinutes(30),
             'status' => TaskStatus::Completed,
             'progress_percent' => 100,

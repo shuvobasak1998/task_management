@@ -57,10 +57,10 @@ class TaskTest extends TestCase
             'title' => 'Fallback timing task',
             'status' => TaskStatus::Pending,
             'progress_percent' => 0,
-            'estimated_minutes' => 120,
             'created_by' => User::factory()->create()->id,
         ]);
         $task->created_at = now()->subMinutes(30);
+        $task->due_at = now()->addMinutes(90);
 
         $this->assertSame(5400, $task->remainingSeconds());
 

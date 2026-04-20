@@ -12,6 +12,7 @@ use App\Services\Tasks\TaskPageDataBuilder;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class TaskController extends Controller
 {
@@ -42,6 +43,8 @@ class TaskController extends Controller
     public function store(StoreTaskRequest $request): RedirectResponse
     {
         $validated = $request->validated();
+        $dueAt = isset($validated['due_at']) ? Carbon::parse($validated['due_at']) : null;
+        $startedAt = isset($validated['started_at']) ? Carbon::parse($validated['started_at']) : now();
 
         Task::create([
             'title' => $validated['title'],
@@ -49,9 +52,9 @@ class TaskController extends Controller
             'status' => $validated['status'] ?? TaskStatus::Pending,
             'progress_percent' => $validated['progress_percent'] ?? 0,
             'priority' => $validated['priority'] ?? TaskPriority::Medium,
-            'estimated_minutes' => $validated['estimated_minutes'],
-            'started_at' => $validated['started_at'] ?? now(),
-            'due_at' => $validated['due_at'] ?? null,
+            'estimated_minutes' => $this->derivedEstimatedMinutes($startedAt, $dueAt),
+            'started_at' => $startedAt,
+            'due_at' => $dueAt,
             'created_by' => $request->user()->id,
             'assigned_to' => $validated['assigned_to'] ?? null,
         ]);
@@ -74,7 +77,18 @@ class TaskController extends Controller
 
     public function update(UpdateTaskRequest $request, Task $task): RedirectResponse
     {
-        $task->update($request->validated());
+        $validated = $request->validated();
+        $dueAt = isset($validated['due_at']) ? Carbon::parse($validated['due_at']) : null;
+        $startedAt = isset($validated['started_at'])
+            ? Carbon::parse($validated['started_at'])
+            : ($task->started_at ?? $task->created_at ?? now());
+
+        $task->update([
+            ...$validated,
+            'estimated_minutes' => $this->derivedEstimatedMinutes($task->created_at ?? $startedAt, $dueAt),
+            'started_at' => $startedAt,
+            'due_at' => $dueAt,
+        ]);
 
         return redirect()->route('tasks.index')
             ->with('status', 'Task updated successfully.');
@@ -120,5 +134,14 @@ class TaskController extends Controller
         $referer = $request->headers->get('referer');
 
         return redirect()->to($referer ?: route($fallbackRoute));
+    }
+
+    protected function derivedEstimatedMinutes(?Carbon $from, ?Carbon $dueAt): int
+    {
+        if (! $from instanceof Carbon || ! $dueAt instanceof Carbon || $dueAt->lte($from)) {
+            return 0;
+        }
+
+        return (int) ceil($from->diffInSeconds($dueAt) / 60);
     }
 }

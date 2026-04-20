@@ -14,11 +14,6 @@
                     description="Review momentum, spot delivery risk, and understand how the team is moving before you dive into task execution."
                     :tags="['Monthly trends', 'Status mix', 'Delivery signals']"
                 >
-                    <x-slot:actions>
-                        <button type="button" data-modal-trigger="create-task-modal" class="primary-pill">
-                            Create task
-                        </button>
-                    </x-slot:actions>
                 </x-ui.page-hero>
 
                 <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

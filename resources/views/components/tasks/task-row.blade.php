@@ -34,9 +34,11 @@
         </div>
     </td>
     <td class="px-4 py-4 align-top">
-        <div class="min-w-[120px] text-sm text-stone-300">
-            <p class="font-medium text-white">{{ $task->due_at?->format('M d, Y') ?? 'No deadline' }}</p>
-            <p class="mt-1 text-xs uppercase tracking-[0.18em] text-stone-400">{{ $task->estimated_minutes }} min</p>
+        <div class="min-w-[180px] text-sm text-stone-300">
+            <p class="font-medium text-white">{{ $task->due_at?->format('M d, Y h:i A') ?? 'No deadline' }}</p>
+            <p class="mt-1 text-xs uppercase tracking-[0.18em] text-stone-400">
+                Created {{ $task->created_at?->format('M d, Y h:i A') ?? 'unknown' }}
+            </p>
         </div>
     </td>
     <td class="px-4 py-4 align-top">

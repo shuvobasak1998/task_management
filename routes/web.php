@@ -20,7 +20,8 @@ Route::middleware('guest')->group(function (): void {
 });
 
 Route::middleware('auth')->group(function (): void {
-    Route::get('/dashboard', [TaskController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [TaskController::class, 'dashboard'])->name('dashboard');
+    Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
     Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
     Route::get('/tasks/{task}/edit', [TaskController::class, 'edit'])->name('tasks.edit');
     Route::patch('/tasks/{task}/progress', [TaskController::class, 'progress'])->name('tasks.progress');

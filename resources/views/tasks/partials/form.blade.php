@@ -98,7 +98,7 @@
     </button>
 
     @if ($showCancelLink)
-        <a href="{{ route('dashboard') }}" class="secondary-pill">
+        <a href="{{ url()->previous() }}" class="secondary-pill">
             Cancel
         </a>
     @endif

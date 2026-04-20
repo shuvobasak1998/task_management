@@ -17,6 +17,13 @@ class AuthenticationTest extends TestCase
         $response->assertRedirect('/login');
     }
 
+    public function test_guest_is_redirected_to_login_from_tasks_workspace(): void
+    {
+        $response = $this->get('/tasks');
+
+        $response->assertRedirect('/login');
+    }
+
     public function test_user_can_register_and_access_dashboard(): void
     {
         $response = $this->post('/register', [

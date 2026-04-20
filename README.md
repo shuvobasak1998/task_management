@@ -1,6 +1,6 @@
 # TaskFlow Studio
 
-TaskFlow Studio is a polished Laravel-based task management system for small teams. It focuses on secure access, clear task ownership, fast progress updates, live countdown timing, and a dashboard that makes work status easy to understand at a glance.
+TaskFlow Studio is a polished Laravel-based task management system for small teams. It focuses on secure access, clear task ownership, fast progress updates, live countdown timing, and a clean split between operational task management and analytical reporting.
 
 This project was built with a recruiter-facing mindset:
 - clean architecture
@@ -11,8 +11,9 @@ This project was built with a recruiter-facing mindset:
 
 ## Features
 
-- Authentication with register, login, logout, and protected dashboard access
-- Shared team workspace with task creator and assignee ownership
+- Authentication with register, login, logout, and protected application access
+- Dedicated `Dashboard` page for analytics and summary signals
+- Dedicated `Tasks` workspace page for task management and progress actions
 - Full task CRUD
 - Task status tracking: `pending`, `in_progress`, `completed`
 - Progress bar with one-click updates
@@ -22,7 +23,7 @@ This project was built with a recruiter-facing mindset:
 - Search and filtering by status, priority, assignee, and overdue state
 - Dashboard insights for total, active, completed, due-soon, and overdue work
 - Authorization rules for update/delete/progress actions
-- Feature tests covering core workflows and edge cases
+- Feature and unit tests covering core workflows and business rules
 
 ## Tech Stack
 
@@ -31,13 +32,16 @@ This project was built with a recruiter-facing mindset:
 - Blade
 - Tailwind CSS 4
 - Vite
-- MySQL
+- SQLite by default, with MySQL also supported
 - PHPUnit
 
 ## Core Product Decisions
 
 - Authentication is included because this is a team-facing system and should not be openly editable by anyone.
 - Team management is intentionally kept lightweight: one shared workspace instead of multi-tenant organization management.
+- The product uses a deliberate two-page split:
+  - `Dashboard` for analytics, trends, and delivery signals
+  - `Tasks` for day-to-day workspace operations
 - The timer is estimate-based, not a manual timesheet system.
 - Progress and status are intentionally linked:
   - setting progress to `100` completes the task
@@ -46,7 +50,7 @@ This project was built with a recruiter-facing mindset:
 
 ## Authorization Rules
 
-- Any authenticated user can view the dashboard and create tasks
+- Any authenticated user can view the dashboard, access the tasks workspace, and create tasks
 - Task creator or assignee can update a task
 - Only the task creator can delete a task
 - Unauthorized task updates, deletions, and progress actions are blocked server-side
@@ -73,9 +77,24 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-### 4. Configure MySQL
+### 4. Configure the database
 
-Update `.env` with your local MySQL credentials:
+The default configuration in `.env.example` uses SQLite, which is the fastest way to run the project locally.
+
+For SQLite:
+
+```bash
+touch database/database.sqlite
+```
+
+Then make sure `.env` includes:
+
+```env
+DB_CONNECTION=sqlite
+DB_DATABASE=/absolute/path/to/task_management/database/database.sqlite
+```
+
+If you prefer MySQL, update `.env` with your local MySQL credentials:
 
 ```env
 DB_CONNECTION=mysql
@@ -86,7 +105,7 @@ DB_USERNAME=your_username
 DB_PASSWORD=your_password
 ```
 
-Create the database manually in MySQL before running migrations.
+Create the database manually in MySQL before running migrations if you use that option.
 
 ### 5. Run database migrations
 
@@ -130,13 +149,26 @@ php artisan test
 
 The test suite covers:
 - authentication access
-- task creation, update, and deletion
+- dashboard analytics rendering
+- tasks workspace rendering and filtering
+- task creation, update, deletion, and redirects
 - task policy rules
 - one-click progress actions
 - progress/status synchronization
 - overdue and timer state behavior
-- search and filtering
+- due-soon and countdown business rules
 - validation and authorization edge cases
+
+## Application Flow
+
+- `/dashboard`
+  - Analytical overview page
+  - Shows summary cards, monthly completion ratio, status distribution, overdue tasks, and due-soon tasks
+  - Includes a create-task modal
+- `/tasks`
+  - Main workspace page
+  - Shows the searchable/filterable task table, timers, ownership, and action buttons
+  - Includes the primary create-task modal and task progress actions
 
 ## Project Structure
 
@@ -144,6 +176,8 @@ High-level organization:
 
 - `app/Http/Controllers`
   - auth flow and task actions
+- `app/Services/Tasks`
+  - page data building for dashboard/workspace rendering
 - `app/Http/Requests`
   - request validation for task create/update
 - `app/Models`
@@ -156,28 +190,44 @@ High-level organization:
   - Blade layouts, auth screens, dashboard, task views
 - `tests/Feature`
   - end-to-end behavior tests
+- `tests/Unit`
+  - focused business-rule tests
 
 ## Testing Approach
 
-The testing strategy is intentionally behavior-focused rather than only model-focused.
+The testing strategy combines feature tests for user-facing flows with focused unit tests for task lifecycle rules.
 
 Key priorities:
 - protect business rules
 - verify authorization boundaries
-- confirm the dashboard behaves correctly under normal use
+- confirm the dashboard and tasks workspace each behave according to their current responsibilities
 - validate the most important recruiter-visible features
 
-The app uses feature tests heavily because the most valuable risks here are cross-layer:
+Feature tests cover the most valuable cross-layer risks:
 - route protection
 - form validation
 - policy enforcement
-- lifecycle synchronization
-- dashboard rendering logic
+- redirects after mutations
+- dashboard and workspace rendering logic
+
+Unit tests cover the model-level rules that should remain stable even if the UI changes:
+- progress/status/completed-at synchronization
+- overdue and due-soon calculations
+- remaining-time calculation behavior
+
+## Architecture Notes
+
+- Authentication gates all task management screens.
+- `TaskPolicy` controls who can update and delete tasks.
+- Form requests validate create and update input before the controller mutates data.
+- `TaskPageDataBuilder` centralizes the shared query and analytics preparation used by both page types.
+- The `Task` model owns lifecycle rules such as status/progress synchronization and timer-related helpers.
 
 ## Assumptions
 
 - This is a small internal team tool, not a public SaaS product
 - One shared workspace is enough for the scope of this assignment
+- The current split between analytics and workspace is the intended UX direction
 - Email verification, notifications, attachments, comments, and advanced RBAC are intentionally out of scope
 - The timer reflects estimated delivery time, not employee timesheet tracking
 

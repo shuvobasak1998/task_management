@@ -8,77 +8,35 @@ use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
 use App\Models\Task;
 use App\Models\User;
+use App\Services\Tasks\TaskPageDataBuilder;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
-    public function index(): View
+    public function dashboard(Request $request, TaskPageDataBuilder $taskPageDataBuilder): View
     {
-        $user = auth()->user();
-        $filters = [
-            'search' => request('search'),
-            'status' => request('status'),
-            'priority' => request('priority'),
-            'assigned_to' => request('assigned_to'),
-            'overdue' => request()->boolean('overdue'),
-        ];
+        return view('dashboard', $this->pageData($request, $taskPageDataBuilder));
+    }
 
-        $filteredTasks = Task::query()
-            ->with(['creator', 'assignee'])
-            ->search($filters['search'])
-            ->forStatus($filters['status'])
-            ->forPriority($filters['priority'])
-            ->assignedTo($filters['assigned_to'] ? (int) $filters['assigned_to'] : null)
-            ->when($filters['overdue'], fn ($query) => $query->overdue())
-            ->latest()
-            ->get();
+    public function index(Request $request, TaskPageDataBuilder $taskPageDataBuilder): View
+    {
+        return view('tasks.index', $this->pageData($request, $taskPageDataBuilder));
+    }
 
-        $allTasks = Task::query()
-            ->with(['creator', 'assignee'])
-            ->latest()
-            ->get();
+    /**
+     * @return array<string, mixed>
+     */
+    protected function pageData(Request $request, TaskPageDataBuilder $taskPageDataBuilder): array
+    {
+        /** @var User $user */
+        $user = $request->user();
 
-        $myTasksCount = $allTasks->filter(
-            fn (Task $task): bool => $task->created_by === $user->id || $task->assigned_to === $user->id,
-        )->count();
-
-        $monthlyCompletionChart = collect(range(5, 0))->map(function (int $monthsAgo) use ($allTasks): array {
-            $month = Carbon::now()->subMonths($monthsAgo)->startOfMonth();
-            $created = $allTasks->filter(
-                fn (Task $task): bool => $task->created_at instanceof Carbon && $task->created_at->isSameMonth($month),
-            )->count();
-            $completed = $allTasks->filter(
-                fn (Task $task): bool => $task->completed_at instanceof Carbon && $task->completed_at->isSameMonth($month),
-            )->count();
-
-            return [
-                'label' => $month->format('M'),
-                'created' => $created,
-                'completed' => $completed,
-                'ratio' => $created > 0 ? (int) round(($completed / $created) * 100) : 0,
-            ];
-        })->values();
-
-        $distributionChart = [
-            ['label' => 'Completed', 'value' => $allTasks->where('status', TaskStatus::Completed)->count(), 'color' => '#15803d'],
-            ['label' => 'Overdue', 'value' => $allTasks->filter(fn (Task $task): bool => $task->isOverdue())->count(), 'color' => '#be123c'],
-            ['label' => 'Active now', 'value' => $allTasks->where('status', TaskStatus::InProgress)->count(), 'color' => '#b45309'],
-        ];
-
-        return view('tasks.index', [
-            'filteredTasks' => $filteredTasks,
-            'allTasks' => $allTasks,
-            'myTasksCount' => $myTasksCount,
-            'users' => User::query()->orderBy('name')->get(),
-            'priorities' => TaskPriority::cases(),
-            'statuses' => TaskStatus::cases(),
-            'filters' => $filters,
-            'monthlyCompletionChart' => $monthlyCompletionChart,
-            'distributionChart' => $distributionChart,
-        ]);
+        return $taskPageDataBuilder->buildForUser(
+            $user,
+            $taskPageDataBuilder->filtersFromRequest($request),
+        );
     }
 
     public function store(StoreTaskRequest $request): RedirectResponse
@@ -98,7 +56,7 @@ class TaskController extends Controller
             'assigned_to' => $validated['assigned_to'] ?? null,
         ]);
 
-        return redirect()->route('dashboard')
+        return $this->redirectToPreviousPage($request)
             ->with('status', 'Task created successfully.');
     }
 
@@ -118,7 +76,7 @@ class TaskController extends Controller
     {
         $task->update($request->validated());
 
-        return redirect()->route('dashboard')
+        return redirect()->route('tasks.index')
             ->with('status', 'Task updated successfully.');
     }
 
@@ -143,7 +101,7 @@ class TaskController extends Controller
             'status' => $status,
         ]);
 
-        return redirect()->route('dashboard')
+        return $this->redirectToPreviousPage($request)
             ->with('status', 'Task progress updated successfully.');
     }
 
@@ -153,7 +111,14 @@ class TaskController extends Controller
 
         $task->delete();
 
-        return redirect()->route('dashboard')
+        return $this->redirectToPreviousPage(request())
             ->with('status', 'Task deleted successfully.');
+    }
+
+    protected function redirectToPreviousPage(Request $request, string $fallbackRoute = 'tasks.index'): RedirectResponse
+    {
+        $referer = $request->headers->get('referer');
+
+        return redirect()->to($referer ?: route($fallbackRoute));
     }
 }

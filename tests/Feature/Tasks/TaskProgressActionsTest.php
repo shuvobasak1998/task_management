@@ -74,6 +74,72 @@ class TaskProgressActionsTest extends TestCase
         ]);
     }
 
+    public function test_progress_endpoint_returns_json_for_async_updates(): void
+    {
+        $user = User::factory()->create();
+        $task = Task::factory()->create([
+            'created_by' => $user->id,
+            'assigned_to' => null,
+            'progress_percent' => 20,
+            'status' => TaskStatus::Pending,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->patchJson("/tasks/{$task->id}/progress", [
+                'target_progress' => 65,
+            ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'message' => 'Task progress updated successfully.',
+                'task' => [
+                    'id' => $task->id,
+                    'progress_percent' => 65,
+                    'status' => TaskStatus::InProgress->value,
+                    'status_label' => 'In Progress',
+                ],
+            ]);
+
+        $this->assertDatabaseHas('tasks', [
+            'id' => $task->id,
+            'progress_percent' => 65,
+            'status' => TaskStatus::InProgress->value,
+        ]);
+    }
+
+    public function test_async_progress_update_to_zero_returns_pending_status_json(): void
+    {
+        $user = User::factory()->create();
+        $task = Task::factory()->create([
+            'created_by' => $user->id,
+            'assigned_to' => null,
+            'progress_percent' => 35,
+            'status' => TaskStatus::InProgress,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->patchJson("/tasks/{$task->id}/progress", [
+                'target_progress' => 0,
+            ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'message' => 'Task progress updated successfully.',
+                'task' => [
+                    'id' => $task->id,
+                    'progress_percent' => 0,
+                    'status' => TaskStatus::Pending->value,
+                    'status_label' => 'Pending',
+                ],
+            ]);
+
+        $this->assertDatabaseHas('tasks', [
+            'id' => $task->id,
+            'progress_percent' => 0,
+            'status' => TaskStatus::Pending->value,
+        ]);
+    }
+
     public function test_create_task_from_dashboard_returns_to_dashboard(): void
     {
         $creator = User::factory()->create();

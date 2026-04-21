@@ -116,3 +116,175 @@ document.querySelectorAll('[data-flash-message]').forEach((element) => {
         }, timeout);
     }
 });
+
+const progressStatusClasses = {
+    pending: ['bg-stone-100', 'text-stone-700'],
+    in_progress: ['bg-amber-100', 'text-amber-900'],
+    completed: ['bg-emerald-100', 'text-emerald-900'],
+};
+
+const allProgressStatusClasses = Object.values(progressStatusClasses).flat();
+
+const clampProgressValue = (value) => {
+    if (Number.isNaN(value)) {
+        return 0;
+    }
+
+    return Math.max(0, Math.min(100, value));
+};
+
+const calculateProgressFromPointer = (track, clientX) => {
+    const { left, width } = track.getBoundingClientRect();
+
+    if (width <= 0) {
+        return 0;
+    }
+
+    return clampProgressValue(Math.round(((clientX - left) / width) * 100));
+};
+
+const applyProgressValue = (control, value) => {
+    const nextValue = clampProgressValue(value);
+    const fill = control.querySelector('[data-progress-fill]');
+    const label = control.querySelector('[data-progress-value-label]');
+    const track = control.querySelector('[data-progress-track]');
+
+    control.dataset.progressValue = String(nextValue);
+
+    if (fill) {
+        fill.style.width = `${nextValue}%`;
+    }
+
+    if (label) {
+        label.textContent = `${nextValue}%`;
+    }
+
+    if (track) {
+        track.setAttribute('aria-valuenow', String(nextValue));
+    }
+};
+
+const applyTaskStatus = (taskId, status, statusLabel) => {
+    document.querySelectorAll(`[data-task-status="${taskId}"]`).forEach((element) => {
+        element.classList.remove(...allProgressStatusClasses);
+        element.classList.add(...(progressStatusClasses[status] ?? progressStatusClasses.pending));
+        element.textContent = statusLabel;
+    });
+};
+
+const persistProgressValue = async (control, value) => {
+    const previousValue = Number.parseInt(control.dataset.progressLastCommitted ?? control.dataset.progressValue ?? '0', 10);
+
+    if (control.dataset.progressSaving === 'true' || previousValue === value) {
+        return;
+    }
+
+    control.dataset.progressSaving = 'true';
+
+    try {
+        const response = await window.fetch(control.dataset.progressUrl, {
+            method: 'PATCH',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': control.dataset.progressCsrf ?? '',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({
+                target_progress: value,
+            }),
+        });
+
+        if (! response.ok) {
+            throw new Error('Failed to update task progress.');
+        }
+
+        const payload = await response.json();
+        const task = payload.task ?? null;
+
+        if (! task) {
+            throw new Error('Missing task payload.');
+        }
+
+        applyProgressValue(control, task.progress_percent);
+        control.dataset.progressLastCommitted = String(task.progress_percent);
+        applyTaskStatus(task.id, task.status, task.status_label);
+    } catch (error) {
+        applyProgressValue(control, previousValue);
+    } finally {
+        control.dataset.progressSaving = 'false';
+    }
+};
+
+document.querySelectorAll('[data-progress-control]').forEach((control) => {
+    const track = control.querySelector('[data-progress-track]');
+
+    if (! track) {
+        return;
+    }
+
+    const initialValue = clampProgressValue(Number.parseInt(control.dataset.progressValue ?? '0', 10));
+    control.dataset.progressLastCommitted = String(initialValue);
+    control.dataset.progressSaving = 'false';
+    applyProgressValue(control, initialValue);
+
+    let isDragging = false;
+
+    const updateFromPointer = (clientX) => {
+        applyProgressValue(control, calculateProgressFromPointer(track, clientX));
+    };
+
+    track.addEventListener('pointerdown', (event) => {
+        isDragging = true;
+        track.setPointerCapture(event.pointerId);
+        updateFromPointer(event.clientX);
+    });
+
+    track.addEventListener('pointermove', (event) => {
+        if (! isDragging) {
+            return;
+        }
+
+        updateFromPointer(event.clientX);
+    });
+
+    const commitPointerValue = (event) => {
+        if (! isDragging) {
+            return;
+        }
+
+        isDragging = false;
+
+        if (track.hasPointerCapture(event.pointerId)) {
+            track.releasePointerCapture(event.pointerId);
+        }
+
+        const value = clampProgressValue(Number.parseInt(control.dataset.progressValue ?? '0', 10));
+        void persistProgressValue(control, value);
+    };
+
+    track.addEventListener('pointerup', commitPointerValue);
+    track.addEventListener('pointercancel', commitPointerValue);
+
+    track.addEventListener('keydown', (event) => {
+        const currentValue = clampProgressValue(Number.parseInt(control.dataset.progressValue ?? '0', 10));
+        let nextValue = currentValue;
+
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
+            nextValue = currentValue - 1;
+        } else if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
+            nextValue = currentValue + 1;
+        } else if (event.key === 'Home') {
+            nextValue = 0;
+        } else if (event.key === 'End') {
+            nextValue = 100;
+        } else {
+            return;
+        }
+
+        event.preventDefault();
+        nextValue = clampProgressValue(nextValue);
+        applyProgressValue(control, nextValue);
+        void persistProgressValue(control, nextValue);
+    });
+});

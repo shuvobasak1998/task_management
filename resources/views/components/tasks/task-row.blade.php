@@ -19,10 +19,10 @@
         </div>
     </td>
     <td class="px-4 py-4 align-top">
-        <x-tasks.status-badge :status="$task->status" />
+        <x-tasks.status-badge :status="$task->status" data-task-status="{{ $task->id }}" />
     </td>
     <td class="px-4 py-4 align-top">
-        <x-tasks.progress-bar :progress="$task->progress_percent" compact="true" />
+        <x-tasks.progress-bar :task="$task" :progress="$task->progress_percent" compact="true" />
     </td>
     <td class="px-4 py-4 align-top">
         <x-tasks.priority-badge :priority="$task->priority" />

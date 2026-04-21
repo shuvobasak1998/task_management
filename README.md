@@ -15,13 +15,18 @@ This project was built with a recruiter-facing mindset:
 - Dedicated `Dashboard` page for analytics and summary signals
 - Dedicated `Tasks` workspace page for task management and progress actions
 - Full task CRUD
+- Task assignment between team members
 - Task status tracking: `pending`, `in_progress`, `completed`
 - Progress bar with one-click updates
+- Reopen flow for completed tasks by lowering progress below `100`
 - Automatic progress/status synchronization
+- Async JSON progress endpoint for inline updates
 - Live countdown clock per task
 - Overdue and due-soon visibility
 - Search and filtering by status, priority, assignee, and overdue state
-- Dashboard insights for total, active, completed, due-soon, and overdue work
+- Dashboard insights for total, assigned-to-me, created-by-me, active, completed, due-soon, and overdue work
+- Monthly completion ratio and status distribution analytics
+- Context-aware redirects back to dashboard or workspace after create/delete/progress actions
 - Authorization rules for update/delete/progress actions
 - Feature and unit tests covering core workflows and business rules
 
@@ -32,7 +37,7 @@ This project was built with a recruiter-facing mindset:
 - Blade
 - Tailwind CSS 4
 - Vite
-- SQLite by default, with MySQL also supported
+- MySQL by default
 - PHPUnit
 
 ## Core Product Decisions
@@ -79,22 +84,9 @@ php artisan key:generate
 
 ### 4. Configure the database
 
-The default configuration in `.env.example` uses SQLite, which is the fastest way to run the project locally.
+This project uses MySQL as the default database.
 
-For SQLite:
-
-```bash
-touch database/database.sqlite
-```
-
-Then make sure `.env` includes:
-
-```env
-DB_CONNECTION=sqlite
-DB_DATABASE=/absolute/path/to/task_management/database/database.sqlite
-```
-
-If you prefer MySQL, update `.env` with your local MySQL credentials:
+Update `.env` with your local MySQL credentials:
 
 ```env
 DB_CONNECTION=mysql
@@ -105,13 +97,31 @@ DB_USERNAME=your_username
 DB_PASSWORD=your_password
 ```
 
-Create the database manually in MySQL before running migrations if you use that option.
+Create the database manually in MySQL before running migrations.
+
+If you want to use SQLite instead, you can switch `.env` to:
+
+```env
+DB_CONNECTION=sqlite
+DB_DATABASE=/absolute/path/to/task_management/database/database.sqlite
+```
 
 ### 5. Run database migrations
 
 ```bash
 php artisan migrate
 ```
+
+### 5.1 Seed demo users and tasks
+
+```bash
+php artisan db:seed
+```
+
+This seeds:
+- 10 users total
+- 2 stable reviewer accounts
+- 10 demo tasks across pending, in-progress, completed, due-soon, and overdue states
 
 ### 6. Install frontend dependencies
 
@@ -141,6 +151,15 @@ Then open:
 http://127.0.0.1:8000
 ```
 
+## Reviewer Login
+
+After running `php artisan db:seed`, reviewers can sign in with either of these seeded accounts:
+
+- `review.admin@example.com` / `password`
+- `review.member@example.com` / `password`
+
+Additional seeded users are generated automatically, and their password is also `password`.
+
 ## Running Tests
 
 ```bash
@@ -154,6 +173,7 @@ The test suite covers:
 - task creation, update, deletion, and redirects
 - task policy rules
 - one-click progress actions
+- reopen and inline progress JSON responses
 - progress/status synchronization
 - overdue and timer state behavior
 - due-soon and countdown business rules
@@ -163,11 +183,11 @@ The test suite covers:
 
 - `/dashboard`
   - Analytical overview page
-  - Shows summary cards, monthly completion ratio, status distribution, overdue tasks, and due-soon tasks
+  - Shows summary cards, assigned/created ownership signals, monthly completion ratio, status distribution, overdue tasks, and due-soon tasks
   - Includes a create-task modal
 - `/tasks`
   - Main workspace page
-  - Shows the searchable/filterable task table, timers, ownership, and action buttons
+  - Shows the searchable/filterable task table, timers, ownership, assignees, and action buttons
   - Includes the primary create-task modal and task progress actions
 
 ## Project Structure
@@ -230,6 +250,12 @@ Unit tests cover the model-level rules that should remain stable even if the UI 
 - The current split between analytics and workspace is the intended UX direction
 - Email verification, notifications, attachments, comments, and advanced RBAC are intentionally out of scope
 - The timer reflects estimated delivery time, not employee timesheet tracking
+
+## Review Notes
+
+- Authentication is intentionally enabled for the assessment review flow.
+- Demo reviewer credentials are seeded in [database/seeders/UserSeeder.php](/home/shuvo_dev/projects/task_management/database/seeders/UserSeeder.php:18).
+- The default password for seeded accounts is `password`.
 
 ## Future Improvements
 

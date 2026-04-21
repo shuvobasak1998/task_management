@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateTaskRequest;
 use App\Models\Task;
 use App\Models\User;
 use App\Services\Tasks\TaskPageDataBuilder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -94,7 +95,7 @@ class TaskController extends Controller
             ->with('status', 'Task updated successfully.');
     }
 
-    public function progress(Request $request, Task $task): RedirectResponse
+    public function progress(Request $request, Task $task): RedirectResponse|JsonResponse
     {
         $this->authorize('update', $task);
 
@@ -114,6 +115,18 @@ class TaskController extends Controller
             'progress_percent' => $targetProgress,
             'status' => $status,
         ]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Task progress updated successfully.',
+                'task' => [
+                    'id' => $task->id,
+                    'progress_percent' => $task->progress_percent,
+                    'status' => $task->status->value,
+                    'status_label' => str($task->status->value)->replace('_', ' ')->title()->toString(),
+                ],
+            ]);
+        }
 
         return $this->redirectToPreviousPage($request)
             ->with('status', 'Task progress updated successfully.');

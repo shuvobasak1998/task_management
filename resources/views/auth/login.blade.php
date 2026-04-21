@@ -43,5 +43,8 @@
             New to the workspace?
             <a href="{{ route('register') }}" class="font-semibold text-white transition hover:text-amber-300">Create an account</a>
         </p>
+        <p class="text-sm leading-6 text-stone-400">
+            This system was designed and developed for the technical assessment at Qtec Solution Limited.
+        </p>
     </div>
 @endsection

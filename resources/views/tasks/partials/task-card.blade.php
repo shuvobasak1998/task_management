@@ -4,7 +4,7 @@
     <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div class="space-y-4">
             <div class="flex flex-wrap items-center gap-2">
-                <x-tasks.status-badge :status="$task->status" />
+                <x-tasks.status-badge :status="$task->status" data-task-status="{{ $task->id }}" />
                 <x-tasks.priority-badge :priority="$task->priority" />
             </div>
 
@@ -25,7 +25,7 @@
             </div>
 
             <div class="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
-                <x-tasks.progress-bar :progress="$task->progress_percent" />
+                <x-tasks.progress-bar :task="$task" :progress="$task->progress_percent" />
                 <x-tasks.timer-badge :task="$task" />
             </div>
 
